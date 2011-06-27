@@ -1,0 +1,11 @@
+= beefcloud
+
+BeEFCloud is just my collection of files (and potentially scripts) which are associated with creating Publicly available Amazon EC2 instances pre-built with BeEF, the Browser Exploitation Framework
+
+== History
+
+Version 0.1 of beefcloud, released 27th of June 2011
+ - First Release
+
+== License
+  http://www.apache.org/licenses/LICENSE-2.0
