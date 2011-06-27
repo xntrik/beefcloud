@@ -1,0 +1,112 @@
+#!/bin/bash
+#
+# beef		This shell script takes care of starting and stopping
+#		BeEF.
+# chkconfig: 345 99 10
+# description: BeEF, or the Browser Exploitation Framework, is good.
+#
+
+### BEGIN INIT INFO
+# Provides: beef
+# Required-Start: $mysql $network $local_fs $remote_fs
+# Required-Stop: $network $local_fs $remote_fs
+# Short-Description: start and stop beef
+# Description: BeEF, or the Browser Exploitation Framework, is good.
+### END INIT INFO
+
+# Source function library.
+. /etc/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+prog=beef
+lockfile=/var/lock/subsys/$prog
+DBSTAT=`service mysqld status`
+
+start() {
+	[ "$EUID" != "0" ] && exit 4
+	[ "$NETWORKING" = "no" ] && exit 1
+	[ -f /opt/beef/beef ] || exit 5
+	[ -f /etc/sysconfig/beef ] || exit 6
+	. /etc/sysconfig/beef
+
+	if [ -f $lockfile ]; then
+		echo "BeEF lock file exists?"
+		exit 9
+	fi
+
+	if [ "$SVN" = "true" ]; then
+		echo "Updating beef now..."
+		cd /opt/beef/
+		svn cleanup
+		svn update --accept mine-full
+	fi
+
+	if [ "$DBSTAT" = "mysqld is stopped" ]; then
+		echo "MySQLD has not started yet, sleeping for 10 seconds"
+		sleep 10
+	fi
+
+	DBSTAT=`service mysqld status`
+
+	if [ "$DBSTAT" = "mysqld is stopped" ]; then
+		echo "MySQLD is still not running, going to fail now"
+		exit 7
+	fi
+
+        # Start daemons.
+        echo -n $"Starting $prog"
+	cd /opt/beef/
+	ruby ./beef $OPTIONS >> /var/log/beef 2>&1 &
+	disown $!
+        echo
+	touch $lockfile
+	return 0
+}
+
+stop() {
+	[ "$EUID" != "0" ] && exit 4
+	[ ! -f $lockfile ] && exit 5
+        echo -n $"Shutting down $prog PID: "
+	BEEFPID=`ps ux | awk '/ruby .*beef/ && !/awk/ { print $2 }'`
+	echo $BEEFPID
+	kill -INT $BEEFPID
+        echo
+	rm -f $lockfile
+	return 0
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  status)
+	if [ -f $lockfile ]; then
+		BEEFPID=`ps ux | awk '/ruby .*beef/ && !/awk/ { print $2 }'`
+		echo "$prog is running under PID: $BEEFPID"
+	else
+		echo "$prog does not appear to be running"
+	fi
+	;;
+  restart|force-reload)
+	stop
+	start
+	;;
+  try-restart|condrestart)
+	if status $prog > /dev/null; then
+	    stop
+	    start
+	fi
+	;;
+  reload)
+	exit 3
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|try-restart|force-reload}"
+	exit 2
+esac
