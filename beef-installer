@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+sudo yum install -y git make gcc openssl-devel gcc-c++ patch readline readline-devel zlib zlib-devel libyaml-devel libffi-devel bzip2 autoconf automake libtool bison iconv-devel sqlite-devel
+bash -s stable < <(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)
+source .bash_profile
+rvm pkg install openssl
+rvm install 1.9.2 --with-openssl-dir=$rvm_path/usr
+rvm use 1.9.2 --default
+gem install bundler
+git clone git://github.com/beefproject/beef.git
+cd beef
+bundle
