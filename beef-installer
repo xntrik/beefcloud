@@ -4,8 +4,7 @@ sudo yum install -y git make gcc openssl-devel gcc-c++ patch readline readline-d
 wget https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer
 bash ./rvm-installer
 source ~/.rvm/scripts/rvm
-rvm pkg install openssl
-rvm install 1.9.2 --with-openssl-dir=$rvm_path/usr
+rvm install 1.9.2 --autolibs=openssl
 source ~/.rvm/scripts/rvm
 rvm use 1.9.2 --default
 gem install bundler
